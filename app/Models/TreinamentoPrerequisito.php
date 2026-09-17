@@ -9,8 +9,6 @@ class TreinamentoPrerequisito extends Model
 {
     protected $table = 'treinamento_prerequisito';
 
-    public $timestamps = false;
-
     protected $fillable = [
         'treinamento_id',
         'prerequisito_treinamento_id',
