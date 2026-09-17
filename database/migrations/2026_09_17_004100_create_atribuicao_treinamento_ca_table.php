@@ -8,6 +8,12 @@ return new class extends Migration
 {
     public function up(): void
     {
+        // Esta tabela pode existir em bancos criados manualmente antes das migrations.
+        // Nesse caso, preservamos os dados e apenas deixamos o Laravel registrar a migration.
+        if (Schema::hasTable('atribuicao_treinamento_ca')) {
+            return;
+        }
+
         Schema::create('atribuicao_treinamento_ca', function (Blueprint $table) {
             $table->increments('id');
             $table->unsignedInteger('atribuicao_treinamento_id')->index();
