@@ -8,15 +8,15 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::create('colaborador_stw', function (Blueprint $table) {
+        Schema::create('pessoas', function (Blueprint $table) {
             $table->unsignedInteger('pessoa_id_stw')->primary();
             $table->string('cpf');
             $table->string('nome');
             $table->unsignedInteger('empresa_id_stw')->index();
-            $table->string('perfil');
+            $table->boolean('is_admin')->default(false);
             $table->dateTime('sincronizado_em')->nullable();
 
-            $table->foreign('empresa_id_stw', 'colaborador_stw_empresa_fk')
+            $table->foreign('empresa_id_stw', 'pessoas_empresa_fk')
                 ->references('id_stw')
                 ->on('empresa_stw');
         });
@@ -24,6 +24,6 @@ return new class extends Migration
 
     public function down(): void
     {
-        Schema::dropIfExists('colaborador_stw');
+        Schema::dropIfExists('pessoas');
     }
 };

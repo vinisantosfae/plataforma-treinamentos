@@ -27,11 +27,11 @@ return new class extends Migration
 
             $table->foreign('pessoa_id_stw', 'presenca_treinamento_pessoa_fk')
                 ->references('pessoa_id_stw')
-                ->on('colaborador_stw');
+                ->on('pessoas');
 
             $table->foreign('registrado_por_pessoa_id_stw', 'presenca_treinamento_registrador_fk')
                 ->references('pessoa_id_stw')
-                ->on('colaborador_stw');
+                ->on('pessoas');
         });
     }
 

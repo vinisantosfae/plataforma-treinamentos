@@ -33,12 +33,12 @@ class AtribuicaoTreinamento extends Model
 
     public function pessoa(): BelongsTo
     {
-        return $this->belongsTo(ColaboradorStw::class, 'pessoa_id_stw', 'pessoa_id_stw');
+        return $this->belongsTo(Pessoa::class, 'pessoa_id_stw', 'pessoa_id_stw');
     }
 
     public function aprovador(): BelongsTo
     {
-        return $this->belongsTo(ColaboradorStw::class, 'aprovado_por_pessoa_id_stw', 'pessoa_id_stw');
+        return $this->belongsTo(Pessoa::class, 'aprovado_por_pessoa_id_stw', 'pessoa_id_stw');
     }
 
     public function cas(): BelongsToMany

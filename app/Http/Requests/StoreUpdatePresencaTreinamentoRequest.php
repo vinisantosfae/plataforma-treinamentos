@@ -25,9 +25,9 @@ class StoreUpdatePresencaTreinamentoRequest extends FormRequest
                     ->where('pessoa_id_stw', $this->input('pessoa_id_stw'))
                     ->ignore($this->route('presencaTreinamento')),
             ],
-            'pessoa_id_stw' => [$required, 'integer', 'exists:colaborador_stw,pessoa_id_stw'],
+            'pessoa_id_stw' => [$required, 'integer', 'exists:pessoas,pessoa_id_stw'],
             'presente' => [$required, 'boolean'],
-            'registrado_por_pessoa_id_stw' => [$required, 'integer', 'exists:colaborador_stw,pessoa_id_stw'],
+            'registrado_por_pessoa_id_stw' => [$required, 'integer', 'exists:pessoas,pessoa_id_stw'],
             'registrado_em' => [$required, 'date'],
         ];
     }

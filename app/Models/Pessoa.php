@@ -6,18 +6,17 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-class ColaboradorStw extends Model
+class Pessoa extends Model
 {
-    protected $table = 'colaborador_stw';
+    protected $table = 'pessoas';
 
-    protected $fillable = [
-        'pessoa_id_stw',
-        'cpf',
-        'nome',
-        'empresa_id_stw',
-        'perfil',
-        'sincronizado_em',
-    ];
+    protected $primaryKey = 'pessoa_id_stw';
+
+    public $incrementing = false;
+
+    protected $fillable = ['pessoa_id_stw', 'cpf', 'nome', 'empresa_id_stw', 'is_admin', 'sincronizado_em'];
+
+    protected $casts = ['is_admin' => 'boolean'];
 
     public function empresa(): BelongsTo
     {

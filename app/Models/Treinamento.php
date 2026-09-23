@@ -21,12 +21,13 @@ class Treinamento extends Model
         'presenca_minima_percentual',
         'duracao_video_segundos',
         'ativo',
+        'id_empresa',
         'criado_por_pessoa_id_stw',
     ];
 
     public function criador(): BelongsTo
     {
-        return $this->belongsTo(ColaboradorStw::class, 'criado_por_pessoa_id_stw', 'pessoa_id_stw');
+        return $this->belongsTo(Pessoa::class, 'criado_por_pessoa_id_stw', 'pessoa_id_stw');
     }
 
     public function encontros(): HasMany

@@ -25,7 +25,7 @@ class StoreUpdateAtribuicaoTreinamentoRequest extends FormRequest
                     ->where('pessoa_id_stw', $this->input('pessoa_id_stw'))
                     ->ignore($this->route('atribuicaoTreinamento')),
             ],
-            'pessoa_id_stw' => [$required, 'integer', 'exists:colaborador_stw,pessoa_id_stw'],
+            'pessoa_id_stw' => [$required, 'integer', 'exists:pessoas,pessoa_id_stw'],
             'obrigatorio' => [$required, 'boolean'],
             'data_atribuicao' => [$required, 'date'],
             'data_limite' => ['sometimes', 'nullable', 'date', 'after_or_equal:data_atribuicao'],
@@ -35,7 +35,7 @@ class StoreUpdateAtribuicaoTreinamentoRequest extends FormRequest
             'tempo_consumido_segundos' => ['sometimes', 'integer', 'min:0'],
             'data_conclusao' => ['sometimes', 'nullable', 'date'],
             'apto' => ['sometimes', 'nullable', 'boolean'],
-            'aprovado_por_pessoa_id_stw' => ['sometimes', 'nullable', 'integer', 'exists:colaborador_stw,pessoa_id_stw'],
+            'aprovado_por_pessoa_id_stw' => ['sometimes', 'nullable', 'integer', 'exists:pessoas,pessoa_id_stw'],
             'aprovado_em' => ['sometimes', 'nullable', 'date'],
         ];
     }

@@ -1,0 +1,23 @@
+[
+  {
+    "pessoaIdStw": 2001,
+    "empresa": { "idStw": 1001, "razaoSocial": "ACME Equipamentos de Segurança Ltda." },
+    "nome": "Ana Souza",
+    "cpf": "111.111.111-11",
+    "isAdmin": true
+  },
+  {
+    "pessoaIdStw": 2002,
+    "empresa": { "idStw": 1001, "razaoSocial": "ACME Equipamentos de Segurança Ltda." },
+    "nome": "Bruno Lima",
+    "cpf": "222.222.222-22",
+    "isAdmin": false
+  },
+  {
+    "pessoaIdStw": 2003,
+    "empresa": { "idStw": 1002, "razaoSocial": "Beta Serviços Industriais Ltda." },
+    "nome": "Carla Oliveira",
+    "cpf": "333.333.333-33",
+    "isAdmin": true
+  }
+]

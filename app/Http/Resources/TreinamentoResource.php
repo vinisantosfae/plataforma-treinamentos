@@ -23,7 +23,7 @@ class TreinamentoResource extends JsonResource
             'criadoPorPessoaIdStw' => $this->criado_por_pessoa_id_stw,
             'createdAt' => $this->created_at,
             'updatedAt' => $this->updated_at,
-            'criador' => new ColaboradorStwResource($this->whenLoaded('criador')),
+            'criador' => new PessoaResource($this->whenLoaded('criador')),
             'encontros' => TreinamentoEncontroResource::collection($this->whenLoaded('encontros')),
             'prerequisitos' => self::collection($this->whenLoaded('prerequisitos')),
             'requisitoDe' => self::collection($this->whenLoaded('requisitoDe')),

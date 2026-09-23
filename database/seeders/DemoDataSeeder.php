@@ -6,7 +6,6 @@ use App\Models\AtribuicaoTreinamento;
 use App\Models\AtribuicaoTreinamentoCa;
 use App\Models\CaStw;
 use App\Models\CaTreinamento;
-use App\Models\ColaboradorStw;
 use App\Models\EmpresaStw;
 use App\Models\PresencaTreinamento;
 use App\Models\Treinamento;
@@ -35,27 +34,27 @@ class DemoDataSeeder extends Seeder
             'sincronizado_em' => Carbon::parse('2026-09-17 08:05:00'),
         ]);
 
-        $ana = $this->saveExternal('colaborador_stw', 'pessoa_id_stw', 2001, [
+        $ana = $this->saveExternal('pessoas', 'pessoa_id_stw', 2001, [
             'cpf' => '111.111.111-11',
             'nome' => 'Ana Souza',
             'empresa_id_stw' => $empresaAcme->id_stw,
-            'perfil' => 'administrador',
+            'is_admin' => true,
             'sincronizado_em' => Carbon::parse('2026-09-17 08:10:00'),
         ]);
 
-        $bruno = $this->saveExternal('colaborador_stw', 'pessoa_id_stw', 2002, [
+        $bruno = $this->saveExternal('pessoas', 'pessoa_id_stw', 2002, [
             'cpf' => '222.222.222-22',
             'nome' => 'Bruno Lima',
             'empresa_id_stw' => $empresaAcme->id_stw,
-            'perfil' => 'colaborador',
+            'is_admin' => false,
             'sincronizado_em' => Carbon::parse('2026-09-17 08:10:00'),
         ]);
 
-        $carla = $this->saveExternal('colaborador_stw', 'pessoa_id_stw', 2003, [
+        $carla = $this->saveExternal('pessoas', 'pessoa_id_stw', 2003, [
             'cpf' => '333.333.333-33',
             'nome' => 'Carla Oliveira',
             'empresa_id_stw' => $empresaBeta->id_stw,
-            'perfil' => 'gestor',
+            'is_admin' => true,
             'sincronizado_em' => Carbon::parse('2026-09-17 08:15:00'),
         ]);
 
@@ -83,6 +82,7 @@ class DemoDataSeeder extends Seeder
             'presenca_minima_percentual' => null,
             'duracao_video_segundos' => 900,
             'ativo' => true,
+            'id_empresa' => $empresaAcme->id_stw,
             'criado_por_pessoa_id_stw' => $ana->pessoa_id_stw,
         ]);
 
@@ -96,6 +96,7 @@ class DemoDataSeeder extends Seeder
             'presenca_minima_percentual' => 75,
             'duracao_video_segundos' => null,
             'ativo' => true,
+            'id_empresa' => $empresaAcme->id_stw,
             'criado_por_pessoa_id_stw' => $ana->pessoa_id_stw,
         ]);
 
@@ -109,6 +110,7 @@ class DemoDataSeeder extends Seeder
             'presenca_minima_percentual' => 80,
             'duracao_video_segundos' => null,
             'ativo' => true,
+            'id_empresa' => $empresaBeta->id_stw,
             'criado_por_pessoa_id_stw' => $carla->pessoa_id_stw,
         ]);
 

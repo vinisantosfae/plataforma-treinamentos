@@ -24,7 +24,7 @@ return new class extends Migration
 
             $table->foreign('criado_por_pessoa_id_stw', 'treinamento_criador_fk')
                 ->references('pessoa_id_stw')
-                ->on('colaborador_stw');
+                ->on('pessoas');
         });
     }
 

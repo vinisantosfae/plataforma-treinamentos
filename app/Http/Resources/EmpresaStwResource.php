@@ -13,7 +13,7 @@ class EmpresaStwResource extends JsonResource
             'idStw' => $this->id_stw,
             'razaoSocial' => $this->razao_social,
             'sincronizadoEm' => $this->sincronizado_em,
-            'colaboradores' => ColaboradorStwResource::collection($this->whenLoaded('colaboradores')),
+            'colaboradores' => PessoaResource::collection($this->whenLoaded('colaboradores')),
         ];
     }
 }

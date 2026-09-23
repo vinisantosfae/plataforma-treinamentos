@@ -17,6 +17,6 @@ class EmpresaStw extends Model
 
     public function colaboradores(): HasMany
     {
-        return $this->hasMany(ColaboradorStw::class, 'empresa_id_stw', 'id_stw');
+        return $this->hasMany(Pessoa::class, 'empresa_id_stw', 'id_stw');
     }
 }

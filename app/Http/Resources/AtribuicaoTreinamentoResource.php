@@ -27,8 +27,8 @@ class AtribuicaoTreinamentoResource extends JsonResource
             'createdAt' => $this->created_at,
             'updatedAt' => $this->updated_at,
             'treinamento' => new TreinamentoResource($this->whenLoaded('treinamento')),
-            'pessoa' => new ColaboradorStwResource($this->whenLoaded('pessoa')),
-            'aprovador' => new ColaboradorStwResource($this->whenLoaded('aprovador')),
+            'pessoa' => new PessoaResource($this->whenLoaded('pessoa')),
+            'aprovador' => new PessoaResource($this->whenLoaded('aprovador')),
             'cas' => CaStwResource::collection($this->whenLoaded('cas')),
         ];
     }

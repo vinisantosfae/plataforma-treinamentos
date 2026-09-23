@@ -17,8 +17,8 @@ class PresencaTreinamentoResource extends JsonResource
             'registradoPorPessoaIdStw' => $this->registrado_por_pessoa_id_stw,
             'registradoEm' => $this->registrado_em,
             'encontro' => new TreinamentoEncontroResource($this->whenLoaded('encontro')),
-            'pessoa' => new ColaboradorStwResource($this->whenLoaded('pessoa')),
-            'registrador' => new ColaboradorStwResource($this->whenLoaded('registrador')),
+            'pessoa' => new PessoaResource($this->whenLoaded('pessoa')),
+            'registrador' => new PessoaResource($this->whenLoaded('registrador')),
         ];
     }
 }

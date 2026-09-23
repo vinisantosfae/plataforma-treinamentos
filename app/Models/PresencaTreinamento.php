@@ -24,11 +24,11 @@ class PresencaTreinamento extends Model
 
     public function pessoa(): BelongsTo
     {
-        return $this->belongsTo(ColaboradorStw::class, 'pessoa_id_stw', 'pessoa_id_stw');
+        return $this->belongsTo(Pessoa::class, 'pessoa_id_stw', 'pessoa_id_stw');
     }
 
     public function registrador(): BelongsTo
     {
-        return $this->belongsTo(ColaboradorStw::class, 'registrado_por_pessoa_id_stw', 'pessoa_id_stw');
+        return $this->belongsTo(Pessoa::class, 'registrado_por_pessoa_id_stw', 'pessoa_id_stw');
     }
 }

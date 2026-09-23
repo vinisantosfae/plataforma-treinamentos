@@ -36,11 +36,11 @@ return new class extends Migration
 
             $table->foreign('pessoa_id_stw', 'atribuicao_treinamento_pessoa_fk')
                 ->references('pessoa_id_stw')
-                ->on('colaborador_stw');
+                ->on('pessoas');
 
             $table->foreign('aprovado_por_pessoa_id_stw', 'atribuicao_treinamento_aprovador_fk')
                 ->references('pessoa_id_stw')
-                ->on('colaborador_stw');
+                ->on('pessoas');
         });
     }
 
