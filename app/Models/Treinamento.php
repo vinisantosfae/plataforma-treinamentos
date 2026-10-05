@@ -25,6 +25,8 @@ class Treinamento extends Model
         'criado_por_pessoa_id_stw',
     ];
 
+    protected $casts = ['ativo' => 'boolean'];
+
     public function criador(): BelongsTo
     {
         return $this->belongsTo(Pessoa::class, 'criado_por_pessoa_id_stw', 'pessoa_id_stw');

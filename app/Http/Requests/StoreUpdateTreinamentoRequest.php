@@ -25,8 +25,6 @@ class StoreUpdateTreinamentoRequest extends FormRequest
             'presenca_minima_percentual' => ['sometimes', 'nullable', 'integer', 'between:0,100'],
             'duracao_video_segundos' => ['sometimes', 'nullable', 'integer', 'min:0'],
             'ativo' => ['sometimes', 'boolean'],
-            'id_empresa' => [$required, 'integer', 'exists:empresa_stw,id_stw'],
-            'criado_por_pessoa_id_stw' => [$required, 'integer', 'exists:pessoas,pessoa_id_stw'],
         ];
     }
 }

@@ -42,8 +42,8 @@ class HttpContractsTest extends TestCase
         $patchRequest = StoreUpdateTreinamentoRequest::create('/api/treinamentos/1', 'PATCH');
 
         $this->assertSame('required', $storeRequest->rules()['titulo'][0]);
-        $this->assertSame('required', $storeRequest->rules()['criado_por_pessoa_id_stw'][0]);
+        $this->assertSame('required', $storeRequest->rules()['categoria'][0]);
         $this->assertSame('sometimes', $patchRequest->rules()['titulo'][0]);
-        $this->assertSame('sometimes', $patchRequest->rules()['criado_por_pessoa_id_stw'][0]);
+        $this->assertSame('sometimes', $patchRequest->rules()['categoria'][0]);
     }
 }
