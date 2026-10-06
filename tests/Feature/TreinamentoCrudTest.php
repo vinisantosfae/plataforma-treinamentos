@@ -108,6 +108,67 @@ class TreinamentoCrudTest extends TestCase
         $this->assertDatabaseHas('treinamento', ['id' => $prerequisito->id, 'ativo' => true]);
     }
 
+    public function test_admin_cria_treinamento_com_pre_requisito(): void
+    {
+        $base = $this->treinamento(1001, 2001, 'Base');
+
+        $this->as(2001)->postJson('/api/treinamentos', [...$this->payload, 'prerequisito_id' => $base->id])->assertCreated();
+
+        $criado = Treinamento::where('titulo', 'Uso correto de EPIs')->firstOrFail();
+        $this->assertDatabaseHas('treinamento_prerequisito', ['treinamento_id' => $criado->id, 'prerequisito_treinamento_id' => $base->id]);
+    }
+
+    public function test_pre_requisito_precisa_ser_ativo_e_da_mesma_empresa(): void
+    {
+        $inativo = $this->treinamento(1001, 2001, 'Inativo', false);
+        $outraEmpresa = $this->treinamento(1002, 2003, 'Beta');
+
+        $this->as(2001)->postJson('/api/treinamentos', [...$this->payload, 'prerequisito_id' => $inativo->id])->assertUnprocessable()->assertJsonValidationErrors(['prerequisito_id']);
+        $this->as(2001)->postJson('/api/treinamentos', [...$this->payload, 'prerequisito_id' => $outraEmpresa->id])->assertUnprocessable()->assertJsonValidationErrors(['prerequisito_id']);
+        $this->assertDatabaseCount('treinamento', 2);
+    }
+
+    public function test_nao_aceita_pre_requisito_circular(): void
+    {
+        $a = $this->treinamento(1001, 2001, 'A');
+        $b = $this->treinamento(1001, 2001, 'B');
+        $c = $this->treinamento(1001, 2001, 'C');
+        $b->prerequisitos()->attach($a->id);
+        $c->prerequisitos()->attach($b->id);
+
+        $this->as(2001)->patchJson("/api/treinamentos/{$a->id}", ['prerequisito_id' => $a->id])->assertUnprocessable()->assertJsonValidationErrors(['prerequisito_id']);
+        $this->as(2001)->patchJson("/api/treinamentos/{$a->id}", ['prerequisito_id' => $c->id])->assertUnprocessable()->assertJsonValidationErrors(['prerequisito_id']);
+        $this->assertDatabaseMissing('treinamento_prerequisito', ['treinamento_id' => $a->id]);
+    }
+
+    public function test_admin_troca_e_remove_pre_requisito(): void
+    {
+        $um = $this->treinamento(1001, 2001, 'Um');
+        $dois = $this->treinamento(1001, 2001, 'Dois');
+        $alvo = $this->treinamento(1001, 2001, 'Alvo');
+
+        $this->as(2001)->patchJson("/api/treinamentos/{$alvo->id}", ['prerequisito_id' => $um->id])->assertOk();
+        $this->as(2001)->patchJson("/api/treinamentos/{$alvo->id}", ['prerequisito_id' => $dois->id])->assertOk();
+        $this->assertSame([$dois->id], $alvo->prerequisitos()->pluck('treinamento.id')->all());
+
+        $this->as(2001)->patchJson("/api/treinamentos/{$alvo->id}", ['titulo' => 'Sem mexer no vínculo'])->assertOk();
+        $this->assertSame([$dois->id], $alvo->prerequisitos()->pluck('treinamento.id')->all());
+
+        $this->as(2001)->patchJson("/api/treinamentos/{$alvo->id}", ['prerequisito_id' => null])->assertOk();
+        $this->assertSame(0, $alvo->prerequisitos()->count());
+    }
+
+    public function test_listagem_inclui_pre_requisitos(): void
+    {
+        $base = $this->treinamento(1001, 2001, 'Base');
+        $this->treinamento(1001, 2001, 'Avançado')->prerequisitos()->attach($base->id);
+
+        $this->as(2001)->getJson('/api/treinamentos')->assertOk()
+            ->assertJsonPath('data.0.titulo', 'Avançado')
+            ->assertJsonPath('data.0.prerequisitos.0.id', $base->id)
+            ->assertJsonCount(0, 'data.1.prerequisitos');
+    }
+
     private function as(int $pessoaIdStw): self
     {
         $token = User::factory()->create()->createToken('test');
