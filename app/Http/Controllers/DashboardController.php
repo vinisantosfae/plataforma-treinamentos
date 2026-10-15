@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\AtribuicaoTreinamento;
 use App\Models\Pessoa;
 use App\Models\Treinamento;
+use App\Services\AtribuicaoService;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
@@ -12,6 +13,8 @@ use Illuminate\Http\Request;
 
 class DashboardController extends Controller
 {
+    public function __construct(private AtribuicaoService $atribuicoes) {}
+
     public function admin(Request $request): JsonResponse
     {
         $identity = $this->identity($request);
@@ -45,6 +48,7 @@ class DashboardController extends Controller
     public function collaborator(Request $request): JsonResponse
     {
         $identity = $this->identity($request);
+        $this->atribuicoes->sincronizar(Pessoa::findOrFail($identity['pessoaIdStw']));
         $today = Carbon::today();
         $assignments = AtribuicaoTreinamento::query()->where('pessoa_id_stw', $identity['pessoaIdStw'])->with('treinamento');
 
