@@ -15,7 +15,21 @@ class StoreUpdateTreinamentoRequest extends FormRequest
     {
         $required = $this->isMethod('PATCH') ? 'sometimes' : 'required';
 
+        // No cadastro chegam os grupos marcados; na edição, só o que foi marcado e desmarcado.
+        $grupos = $this->isMethod('PATCH')
+            ? [
+                'grupos_adicionados' => ['sometimes', 'array'],
+                'grupos_adicionados.*' => ['integer', 'distinct'],
+                'grupos_removidos' => ['sometimes', 'array'],
+                'grupos_removidos.*' => ['integer', 'distinct'],
+            ]
+            : [
+                'grupo_ids' => ['sometimes', 'array'],
+                'grupo_ids.*' => ['integer', 'distinct'],
+            ];
+
         return [
+            ...$grupos,
             'titulo' => [$required, 'string', 'max:255'],
             'descricao' => ['sometimes', 'nullable', 'string'],
             'tipo' => [$required, 'string', 'max:255'],

@@ -27,6 +27,7 @@ class TreinamentoResource extends JsonResource
             'encontros' => TreinamentoEncontroResource::collection($this->whenLoaded('encontros')),
             'prerequisitos' => self::collection($this->whenLoaded('prerequisitos')),
             'requisitoDe' => self::collection($this->whenLoaded('requisitoDe')),
+            'grupos' => GrupoResource::collection($this->whenLoaded('grupos')),
             'cas' => CaStwResource::collection($this->whenLoaded('cas')),
             'atribuicoes' => AtribuicaoTreinamentoResource::collection($this->whenLoaded('atribuicoes')),
         ];
