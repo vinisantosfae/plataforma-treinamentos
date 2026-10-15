@@ -14,7 +14,19 @@ class Pessoa extends Model
 
     public $incrementing = false;
 
-    protected $fillable = ['pessoa_id_stw', 'cpf', 'nome', 'empresa_id_stw', 'is_admin', 'sincronizado_em'];
+    public $timestamps = false;
+
+    protected $fillable = [
+        'pessoa_id_stw',
+        'cpf',
+        'nome',
+        'email',
+        'empresa_id_stw',
+        'is_admin',
+        'supervisor_nome',
+        'supervisor_email',
+        'sincronizado_em',
+    ];
 
     protected $casts = ['is_admin' => 'boolean'];
 

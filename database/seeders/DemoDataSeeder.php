@@ -37,6 +37,7 @@ class DemoDataSeeder extends Seeder
         $ana = $this->saveExternal('pessoas', 'pessoa_id_stw', 2001, [
             'cpf' => '111.111.111-11',
             'nome' => 'Ana Souza',
+            'email' => 'ana.souza@acme.test',
             'empresa_id_stw' => $empresaAcme->id_stw,
             'is_admin' => true,
             'sincronizado_em' => Carbon::parse('2026-09-17 08:10:00'),
@@ -45,14 +46,18 @@ class DemoDataSeeder extends Seeder
         $bruno = $this->saveExternal('pessoas', 'pessoa_id_stw', 2002, [
             'cpf' => '222.222.222-22',
             'nome' => 'Bruno Lima',
+            'email' => 'bruno.lima@acme.test',
             'empresa_id_stw' => $empresaAcme->id_stw,
             'is_admin' => false,
+            'supervisor_nome' => 'Ana Souza',
+            'supervisor_email' => 'ana.souza@acme.test',
             'sincronizado_em' => Carbon::parse('2026-09-17 08:10:00'),
         ]);
 
         $carla = $this->saveExternal('pessoas', 'pessoa_id_stw', 2003, [
             'cpf' => '333.333.333-33',
             'nome' => 'Carla Oliveira',
+            'email' => 'carla.oliveira@beta.test',
             'empresa_id_stw' => $empresaBeta->id_stw,
             'is_admin' => true,
             'sincronizado_em' => Carbon::parse('2026-09-17 08:15:00'),

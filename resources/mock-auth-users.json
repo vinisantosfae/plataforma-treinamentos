@@ -4,20 +4,26 @@
     "empresa": { "idStw": 1001, "razaoSocial": "ACME Equipamentos de Segurança Ltda." },
     "nome": "Ana Souza",
     "cpf": "111.111.111-11",
-    "isAdmin": true
+    "email": "ana.souza@acme.test",
+    "isAdmin": true,
+    "supervisor": null
   },
   {
     "pessoaIdStw": 2002,
     "empresa": { "idStw": 1001, "razaoSocial": "ACME Equipamentos de Segurança Ltda." },
     "nome": "Bruno Lima",
     "cpf": "222.222.222-22",
-    "isAdmin": false
+    "email": "bruno.lima@acme.test",
+    "isAdmin": false,
+    "supervisor": { "nome": "Ana Souza", "email": "ana.souza@acme.test" }
   },
   {
     "pessoaIdStw": 2003,
     "empresa": { "idStw": 1002, "razaoSocial": "Beta Serviços Industriais Ltda." },
     "nome": "Carla Oliveira",
     "cpf": "333.333.333-33",
-    "isAdmin": true
+    "email": "carla.oliveira@beta.test",
+    "isAdmin": true,
+    "supervisor": null
   }
 ]
