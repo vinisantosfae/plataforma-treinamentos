@@ -19,8 +19,7 @@ class RelatorioPrazosSupervisorMail extends Mailable
     public function __construct(
         public ?string $supervisorNome,
         public Collection $itens,
-    ) {
-    }
+    ) {}
 
     public function envelope(): Envelope
     {

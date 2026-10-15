@@ -17,8 +17,7 @@ class PrazoTreinamentoMail extends Mailable
     public function __construct(
         public AtribuicaoTreinamento $atribuicao,
         public int $diasRestantes,
-    ) {
-    }
+    ) {}
 
     public function envelope(): Envelope
     {

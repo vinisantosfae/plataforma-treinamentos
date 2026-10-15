@@ -18,8 +18,8 @@ Authorization: Bearer <token>
 
 | CPF | Nome | Empresa | Administrador |
 |---|---|---|---|
-| 111.111.111-11 | Ana Souza | ACME (1001) | sim |
-| 222.222.222-22 | Bruno Lima | ACME (1001) | não |
+| 111.111.111-11 | Ana Souza | STW (1001) | sim |
+| 222.222.222-22 | João Pedro | STW (1001) | não |
 | 333.333.333-33 | Carla Oliveira | Beta (1002) | sim |
 
 ### Escopo por empresa e perfis
@@ -80,7 +80,7 @@ Resposta `200`:
     "email": "ana.souza@acme.test",
     "isAdmin": true,
     "supervisor": null,
-    "empresa": { "idStw": 1001, "razaoSocial": "ACME Equipamentos de Segurança Ltda." }
+    "empresa": { "idStw": 1001, "razaoSocial": "STW" }
   }
 }
 ```
@@ -99,12 +99,12 @@ Resposta `204` sem corpo. O token deixa de valer.
 
 ### GET `/dashboard/colaborador`
 
-Resposta `200` (exemplo do Bruno Lima, com o seed de demonstração):
+Resposta `200` (exemplo do João Pedro, com o seed de demonstração):
 
 ```json
 {
-  "identity": { "pessoaIdStw": 2002, "nome": "Bruno Lima", "cpf": "222.222.222-22", "isAdmin": false,
-                "empresa": { "idStw": 1001, "razaoSocial": "ACME Equipamentos de Segurança Ltda." } },
+  "identity": { "pessoaIdStw": 2002, "nome": "João Pedro", "cpf": "222.222.222-22", "isAdmin": false,
+                "empresa": { "idStw": 1001, "razaoSocial": "STW" } },
   "summary": { "aFazer": 0, "emAndamento": 1, "concluidos": 0, "atrasados": 0 },
   "percentualConcluido": 0,
   "attention": [

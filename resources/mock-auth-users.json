@@ -1,7 +1,7 @@
 [
   {
     "pessoaIdStw": 2001,
-    "empresa": { "idStw": 1001, "razaoSocial": "ACME Equipamentos de Segurança Ltda." },
+    "empresa": { "idStw": 1001, "razaoSocial": "STW" },
     "nome": "Ana Souza",
     "cpf": "111.111.111-11",
     "email": "ana.souza@acme.test",
@@ -10,12 +10,12 @@
   },
   {
     "pessoaIdStw": 2002,
-    "empresa": { "idStw": 1001, "razaoSocial": "ACME Equipamentos de Segurança Ltda." },
-    "nome": "Bruno Lima",
+    "empresa": { "idStw": 1001, "razaoSocial": "STW" },
+    "nome": "João Pedro",
     "cpf": "222.222.222-22",
-    "email": "bruno.lima@acme.test",
+    "email": "joao.prado@sou.fae.br",
     "isAdmin": false,
-    "supervisor": { "nome": "Ana Souza", "email": "ana.souza@acme.test" }
+    "supervisor": { "nome": "Vinicius Santos", "email": "vinicius.santos@sou.fae.br" }
   },
   {
     "pessoaIdStw": 2003,
