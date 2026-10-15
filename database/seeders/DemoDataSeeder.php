@@ -76,7 +76,7 @@ class DemoDataSeeder extends Seeder
             'titulo' => 'Integração de Segurança',
             'descricao' => 'Treinamento introdutório sobre segurança e cultura da empresa.',
             'tipo' => 'online',
-            'video_url_youtube' => 'https://www.youtube.com/watch?v=demo-integracao',
+            'video_url_youtube' => 'https://www.youtube.com/watch?v=M7lc1UVf-VE',
             'categoria' => 'obrigatório',
             'prazo_dias' => 30,
             'presenca_minima_percentual' => null,
@@ -112,6 +112,39 @@ class DemoDataSeeder extends Seeder
             'ativo' => true,
             'id_empresa' => $empresaBeta->id_stw,
             'criado_por_pessoa_id_stw' => $carla->pessoa_id_stw,
+        ]);
+
+        $this->saveWithId(new Treinamento(), 4004, [
+            'titulo' => 'Ergonomia no ambiente de trabalho',
+            'descricao' => 'Orientações para ajustar o posto de trabalho e prevenir desconfortos e lesões.',
+            'tipo' => 'online',
+            'video_url_youtube' => 'https://www.youtube.com/watch?v=M7lc1UVf-VE',
+            'categoria' => 'não obrigatório',
+            'prazo_dias' => 60,
+            'presenca_minima_percentual' => null,
+            'duracao_video_segundos' => 480,
+            'ativo' => true,
+            'id_empresa' => $empresaAcme->id_stw,
+            'criado_por_pessoa_id_stw' => $ana->pessoa_id_stw,
+        ]);
+
+        $produtosQuimicos = $this->saveWithId(new Treinamento(), 4005, [
+            'titulo' => 'Trabalho com Produtos Químicos',
+            'descricao' => 'Boas práticas para manuseio, armazenamento e resposta a incidentes com produtos químicos.',
+            'tipo' => 'online',
+            'video_url_youtube' => 'https://www.youtube.com/watch?v=M7lc1UVf-VE',
+            'categoria' => 'obrigatório',
+            'prazo_dias' => 30,
+            'presenca_minima_percentual' => null,
+            'duracao_video_segundos' => 840,
+            'ativo' => true,
+            'id_empresa' => $empresaAcme->id_stw,
+            'criado_por_pessoa_id_stw' => $ana->pessoa_id_stw,
+        ]);
+
+        DB::table('treinamento_prerequisito')->updateOrInsert([
+            'treinamento_id' => $produtosQuimicos->id,
+            'prerequisito_treinamento_id' => $integracao->id,
         ]);
 
         $encontroEpi = $this->saveWithId(new TreinamentoEncontro(), 5001, [

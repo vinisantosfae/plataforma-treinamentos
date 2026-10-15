@@ -59,12 +59,31 @@ class TreinamentoController extends Controller
         $pessoa = $this->pessoa($request);
         $treinamento = $this->find($request, $id);
         $dados = $request->validated();
+        $alteraAtivo = array_key_exists('ativo', $dados);
 
-        DB::transaction(function () use ($treinamento, $dados, $pessoa) {
+        // No PATCH o link só é conferido quando a requisição mexe no vídeo ou no tipo.
+        if (array_key_exists('video_url_youtube', $dados) || array_key_exists('tipo', $dados)) {
+            $this->exigirVideoParaOnline(
+                $dados['tipo'] ?? $treinamento->tipo,
+                array_key_exists('video_url_youtube', $dados) ? $dados['video_url_youtube'] : $treinamento->video_url_youtube
+            );
+        }
+
+        // Inativar por PATCH segue a mesma regra do DELETE.
+        if ($alteraAtivo && ! $dados['ativo'] && $treinamento->ativo) {
+            $this->impedirSeForPrerequisitoAtivo($treinamento);
+        }
+
+        DB::transaction(function () use ($treinamento, $dados, $pessoa, $alteraAtivo) {
             $treinamento->update(Arr::except($dados, ['prerequisito_id']));
 
             if (array_key_exists('prerequisito_id', $dados)) {
                 $this->definirPrerequisito($treinamento, $dados['prerequisito_id'], $pessoa);
+            }
+
+            // Reativar só vale se o pré-requisito (já com o vínculo atualizado) estiver ativo.
+            if ($alteraAtivo && $dados['ativo']) {
+                $this->exigirPrerequisitosAtivos($treinamento);
             }
         });
 
@@ -75,15 +94,40 @@ class TreinamentoController extends Controller
     {
         $treinamento = $this->find($request, $id);
 
+        $this->impedirSeForPrerequisitoAtivo($treinamento);
+
+        $treinamento->update(['ativo' => false]);
+
+        return response()->json(['message' => 'Treinamento inativado com sucesso.']);
+    }
+
+    private function exigirVideoParaOnline(string $tipo, ?string $video): void
+    {
+        if ($tipo === 'online' && blank($video)) {
+            throw ValidationException::withMessages([
+                'video_url_youtube' => 'Informe o link do vídeo no YouTube.',
+            ]);
+        }
+    }
+
+    private function impedirSeForPrerequisitoAtivo(Treinamento $treinamento): void
+    {
         abort_if(
             $treinamento->requisitoDe()->where('ativo', true)->exists(),
             422,
             'Este treinamento é pré-requisito de outro treinamento ativo.'
         );
+    }
 
-        $treinamento->update(['ativo' => false]);
+    private function exigirPrerequisitosAtivos(Treinamento $treinamento): void
+    {
+        $inativo = $treinamento->prerequisitos()->where('ativo', false)->first();
 
-        return response()->json(['message' => 'Treinamento inativado com sucesso.']);
+        abort_if(
+            $inativo !== null,
+            422,
+            "Ative o pré-requisito \"{$inativo?->titulo}\" antes de ativar este treinamento."
+        );
     }
 
     private function definirPrerequisito(Treinamento $treinamento, ?int $prerequisitoId, Pessoa $pessoa): void

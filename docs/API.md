@@ -48,6 +48,10 @@ Com `APP_DEBUG=true` o Laravel acrescenta `exception`, `file` e `trace` ao erro.
 | POST | `/logout` | logado | Revoga o token atual |
 | GET | `/dashboard/colaborador` | logado | Indicadores do colaborador |
 | GET | `/dashboard/admin` | admin | Indicadores da empresa |
+| GET | `/meus-treinamentos` | logado | Treinamentos do colaborador logado, com prazo, status e bloqueio |
+| GET | `/meus-treinamentos/{id}` | logado | Detalhe de um dos meus treinamentos (inclui o link do vídeo) |
+| POST | `/meus-treinamentos/{id}/iniciar` | logado | Marca o treinamento como "em andamento" |
+| POST | `/meus-treinamentos/{id}/concluir` | logado | Registra a conclusão, com o aceite dos termos |
 | GET | `/treinamentos` | logado | Lista os treinamentos da empresa |
 | GET | `/treinamentos/{id}` | logado | Detalha um treinamento |
 | POST | `/treinamentos` | admin | Cadastra um treinamento |
@@ -160,7 +164,7 @@ Nas rotas `GET /treinamentos` e `GET /treinamentos/{id}` o campo `prerequisitos`
 | `tipo` | obrigatório no POST; texto (`online` ou `presencial`) |
 | `categoria` | obrigatório no POST; texto |
 | `descricao` | opcional; texto |
-| `video_url_youtube` | opcional; URL válida |
+| `video_url_youtube` | **obrigatório quando `tipo` é `online`**; URL válida. O presencial não precisa de vídeo. No PATCH só é conferido quando a requisição envia o vídeo ou o tipo |
 | `prazo_dias` | opcional; inteiro maior ou igual a 0 |
 | `presenca_minima_percentual` | opcional; inteiro de 0 a 100 |
 | `duracao_video_segundos` | opcional; inteiro maior ou igual a 0 |
@@ -197,6 +201,15 @@ Não apaga o registro: marca `ativo = false`. Resposta `200`: `{ "message": "Tre
 
 Se o treinamento for pré-requisito de outro treinamento **ativo**, responde `422` com `Este treinamento é pré-requisito de outro treinamento ativo.`
 
+### Ativar e inativar
+
+Não existe rota própria para ativar: usa-se o `PATCH /treinamentos/{id}` já existente, enviando só `ativo` (`{ "ativo": true }` ativa; `{ "ativo": false }` inativa). O `DELETE` continua sendo outro caminho para inativar.
+
+| Operação | Regra | Mensagem (422) |
+|---|---|---|
+| Inativar (`DELETE` ou `PATCH ativo=false`) | Não pode ser pré-requisito de outro treinamento **ativo** | `Este treinamento é pré-requisito de outro treinamento ativo.` |
+| Ativar (`PATCH ativo=true`) | O pré-requisito do treinamento precisa estar **ativo** | `Ative o pré-requisito "..." antes de ativar este treinamento.` |
+
 ### Regras do pré-requisito
 
 Aplicadas em `POST` e `PATCH` quando `prerequisito_id` é informado. Em caso de falha respondem `422` com o erro no campo `prerequisito_id`, e nada é gravado (a operação inteira é desfeita).
@@ -207,6 +220,78 @@ Aplicadas em `POST` e `PATCH` quando `prerequisito_id` é informado. Em caso de 
 | Não pode formar ciclo (nem depender de si mesmo, nem indiretamente: A depende de B, B depende de C, C depende de A) | `O pré-requisito não pode depender deste treinamento.` |
 
 Cada treinamento tem no máximo **um** pré-requisito pela API; um novo `prerequisito_id` substitui o anterior.
+
+## Meus treinamentos (colaborador)
+
+Qualquer pessoa logada, inclusive administradores (que também são colaboradores). O `{id}` das rotas é o **id do treinamento**.
+
+### De onde vêm os treinamentos
+
+Ao chamar qualquer rota de `/meus-treinamentos` (e o dashboard do colaborador), a API **sincroniza as atribuições** da pessoa: cria uma para cada treinamento **ativo da sua empresa** que ela ainda não tem. Chamar de novo não duplica.
+
+> **Regra provisória.** Hoje todo treinamento ativo da empresa é atribuído a todos os colaboradores, porque os GHEs e CAs do STW ainda não estão integrados. Quando a regra *treinamento - CA - grupo* existir, ela deve substituir esse passo em `AtribuicaoService::sincronizar`.
+
+Na criação da atribuição:
+- `obrigatorio` é verdadeiro quando a categoria do treinamento é `obrigatório`.
+- `dataLimite` é a data de hoje somada ao `prazoDias` do treinamento (ou `null`, se o treinamento não tem prazo).
+- `status` começa como `pendente`. Os valores possíveis são `pendente`, `em_andamento` e `concluido`.
+
+### GET `/meus-treinamentos` e GET `/meus-treinamentos/{id}`
+
+Ordenados por `dataLimite` (sem prazo por último) e depois por título. Treinamentos inativos, de outra empresa ou inexistentes respondem `404` no detalhe e não aparecem na lista.
+
+```json
+{
+  "data": [
+    {
+      "id": 4005,
+      "atribuicaoId": 12,
+      "titulo": "Trabalho com Produtos Químicos",
+      "descricao": "Boas práticas para manuseio...",
+      "tipo": "online",
+      "videoUrlYoutube": "https://www.youtube.com/watch?v=M7lc1UVf-VE",
+      "duracaoVideoSegundos": 840,
+      "obrigatorio": true,
+      "prazoDias": 30,
+      "dataAtribuicao": "2026-10-14",
+      "dataLimite": "2026-11-13",
+      "status": "pendente",
+      "termosAceitos": false,
+      "dataConclusao": null,
+      "bloqueado": true,
+      "preRequisito": { "id": 4001, "titulo": "Integração de Segurança" },
+      "cas": []
+    }
+  ]
+}
+```
+
+- `bloqueado` é verdadeiro enquanto houver um pré-requisito **ativo** ainda não concluído por esta pessoa; `preRequisito` indica qual. Pré-requisito inativo não bloqueia.
+- `dataConclusao` vem em ISO 8601; as demais datas, como `AAAA-MM-DD`.
+- O detalhe devolve o mesmo objeto, dentro de `data`.
+
+### POST `/meus-treinamentos/{id}/iniciar`
+
+Sem corpo. Passa de `pendente` para `em_andamento`; chamar de novo não muda nada. Resposta `200` com o treinamento. Se estiver bloqueado: `422` `Conclua o pré-requisito antes deste treinamento.`
+
+### POST `/meus-treinamentos/{id}/concluir`
+
+Corpo:
+
+```json
+{ "termos_aceitos": true }
+```
+
+Grava `status = concluido`, `termos_aceitos`, `termos_aceitos_em` e `data_conclusao`. Resposta `200` com o treinamento.
+
+| Situação | Resposta |
+|---|---|
+| `termos_aceitos` ausente ou falso | `422` no campo `termos_aceitos`: `Confirme que assistiu ao treinamento para concluí-lo.` |
+| Treinamento bloqueado por pré-requisito | `422`: `Conclua o pré-requisito antes deste treinamento.` |
+| Treinamento `presencial` | `422`: `Treinamentos presenciais são concluídos pelo administrador, após o registro de presença.` |
+| Já concluído | `200` **sem alterar** a data original (rever o vídeo não refaz a conclusão) |
+
+> O servidor **não sabe** se o vídeo foi realmente assistido: essa verificação (fim do vídeo) é feita só pelo front. O servidor exige apenas o aceite dos termos.
 
 ## Exemplo rápido com curl
 

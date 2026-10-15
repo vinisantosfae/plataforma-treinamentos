@@ -9,6 +9,8 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Treinamento extends Model
 {
+    public const CATEGORIA_OBRIGATORIO = 'obrigatório';
+
     protected $table = 'treinamento';
 
     protected $fillable = [
@@ -26,6 +28,11 @@ class Treinamento extends Model
     ];
 
     protected $casts = ['ativo' => 'boolean'];
+
+    public function isObrigatorio(): bool
+    {
+        return mb_strtolower(trim((string) $this->categoria)) === self::CATEGORIA_OBRIGATORIO;
+    }
 
     public function criador(): BelongsTo
     {

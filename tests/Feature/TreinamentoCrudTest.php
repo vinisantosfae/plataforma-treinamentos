@@ -158,6 +158,101 @@ class TreinamentoCrudTest extends TestCase
         $this->assertSame(0, $alvo->prerequisitos()->count());
     }
 
+    public function test_admin_inativa_e_reativa_por_patch(): void
+    {
+        $treinamento = $this->treinamento(1001, 2001, 'Ativo');
+
+        $this->as(2001)->patchJson("/api/treinamentos/{$treinamento->id}", ['ativo' => false])->assertOk();
+        $this->assertDatabaseHas('treinamento', ['id' => $treinamento->id, 'ativo' => false]);
+
+        $this->as(2001)->patchJson("/api/treinamentos/{$treinamento->id}", ['ativo' => true])->assertOk();
+        $this->assertDatabaseHas('treinamento', ['id' => $treinamento->id, 'ativo' => true]);
+    }
+
+    public function test_patch_nao_inativa_pre_requisito_de_treinamento_ativo(): void
+    {
+        $prerequisito = $this->treinamento(1001, 2001, 'Base');
+        $this->treinamento(1001, 2001, 'Avançado')->prerequisitos()->attach($prerequisito->id);
+
+        $this->as(2001)->patchJson("/api/treinamentos/{$prerequisito->id}", ['ativo' => false])->assertUnprocessable();
+        $this->assertDatabaseHas('treinamento', ['id' => $prerequisito->id, 'ativo' => true]);
+    }
+
+    public function test_nao_reativa_treinamento_com_pre_requisito_inativo(): void
+    {
+        $prerequisito = $this->treinamento(1001, 2001, 'Base', false);
+        $dependente = $this->treinamento(1001, 2001, 'Avançado', false);
+        $dependente->prerequisitos()->attach($prerequisito->id);
+
+        $this->as(2001)->patchJson("/api/treinamentos/{$dependente->id}", ['ativo' => true])->assertUnprocessable();
+        $this->assertDatabaseHas('treinamento', ['id' => $dependente->id, 'ativo' => false]);
+
+        $this->as(2001)->patchJson("/api/treinamentos/{$prerequisito->id}", ['ativo' => true])->assertOk();
+        $this->as(2001)->patchJson("/api/treinamentos/{$dependente->id}", ['ativo' => true])->assertOk();
+    }
+
+    public function test_reativa_depois_de_remover_o_pre_requisito_inativo(): void
+    {
+        $um = $this->treinamento(1001, 2001, 'Um', false);
+        $dois = $this->treinamento(1001, 2001, 'Dois', false);
+        $dois->prerequisitos()->attach($um->id);
+
+        // Com o pré-requisito (1) inativo, o 2 não reativa.
+        $this->as(2001)->patchJson("/api/treinamentos/{$dois->id}", ['ativo' => true])->assertUnprocessable();
+
+        // Tirando o pré-requisito, o 2 volta a poder ser reativado.
+        $this->as(2001)->patchJson("/api/treinamentos/{$dois->id}", ['prerequisito_id' => null])->assertOk();
+        $this->assertSame(0, $dois->prerequisitos()->count());
+        $this->as(2001)->patchJson("/api/treinamentos/{$dois->id}", ['ativo' => true])->assertOk();
+        $this->assertDatabaseHas('treinamento', ['id' => $dois->id, 'ativo' => true]);
+    }
+
+    public function test_reativa_e_remove_o_pre_requisito_na_mesma_requisicao(): void
+    {
+        $um = $this->treinamento(1001, 2001, 'Um', false);
+        $dois = $this->treinamento(1001, 2001, 'Dois', false);
+        $dois->prerequisitos()->attach($um->id);
+
+        $this->as(2001)->patchJson("/api/treinamentos/{$dois->id}", ['ativo' => true, 'prerequisito_id' => null])->assertOk();
+        $this->assertDatabaseHas('treinamento', ['id' => $dois->id, 'ativo' => true]);
+    }
+
+    public function test_treinamento_online_exige_o_link_do_video(): void
+    {
+        $online = [...$this->payload, 'tipo' => 'online'];
+
+        $this->as(2001)->postJson('/api/treinamentos', $online)->assertUnprocessable()->assertJsonValidationErrors(['video_url_youtube']);
+        $this->as(2001)->postJson('/api/treinamentos', [...$online, 'video_url_youtube' => ''])->assertUnprocessable()->assertJsonValidationErrors(['video_url_youtube']);
+        $this->as(2001)->postJson('/api/treinamentos', [...$online, 'video_url_youtube' => 'não é link'])->assertUnprocessable()->assertJsonValidationErrors(['video_url_youtube']);
+        $this->assertDatabaseCount('treinamento', 0);
+
+        $this->as(2001)->postJson('/api/treinamentos', [...$online, 'video_url_youtube' => 'https://youtu.be/M7lc1UVf-VE'])->assertCreated();
+    }
+
+    public function test_descricao_e_opcional_e_presencial_nao_exige_video(): void
+    {
+        $this->as(2001)->postJson('/api/treinamentos', [...$this->payload, 'tipo' => 'online', 'video_url_youtube' => 'https://youtu.be/M7lc1UVf-VE'])->assertCreated();
+        $this->as(2001)->postJson('/api/treinamentos', [...$this->payload, 'tipo' => 'presencial'])->assertCreated();
+        $this->assertDatabaseCount('treinamento', 2);
+    }
+
+    public function test_patch_nao_deixa_treinamento_online_sem_video(): void
+    {
+        $online = Treinamento::create([...$this->payload, 'tipo' => 'online', 'video_url_youtube' => 'https://youtu.be/M7lc1UVf-VE', 'id_empresa' => 1001, 'criado_por_pessoa_id_stw' => 2001]);
+        $presencial = $this->treinamento(1001, 2001, 'Presencial');
+
+        $this->as(2001)->patchJson("/api/treinamentos/{$online->id}", ['video_url_youtube' => null])->assertUnprocessable()->assertJsonValidationErrors(['video_url_youtube']);
+        $this->as(2001)->patchJson("/api/treinamentos/{$presencial->id}", ['tipo' => 'online'])->assertUnprocessable()->assertJsonValidationErrors(['video_url_youtube']);
+        $this->as(2001)->patchJson("/api/treinamentos/{$presencial->id}", ['tipo' => 'online', 'video_url_youtube' => 'https://youtu.be/M7lc1UVf-VE'])->assertOk();
+    }
+
+    public function test_patch_de_outros_campos_nao_exige_video_de_treinamento_antigo(): void
+    {
+        $antigo = Treinamento::create([...$this->payload, 'tipo' => 'online', 'video_url_youtube' => null, 'id_empresa' => 1001, 'criado_por_pessoa_id_stw' => 2001]);
+
+        $this->as(2001)->patchJson("/api/treinamentos/{$antigo->id}", ['titulo' => 'Só o título'])->assertOk();
+    }
+
     public function test_listagem_inclui_pre_requisitos(): void
     {
         $base = $this->treinamento(1001, 2001, 'Base');

@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\MeuTreinamentoController;
 use App\Http\Controllers\TreinamentoController;
 use Illuminate\Support\Facades\Route;
 
@@ -23,6 +24,11 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::get('/dashboard/colaborador', [DashboardController::class, 'collaborator']);
     Route::get('/dashboard/admin', [DashboardController::class, 'admin'])->middleware('admin');
+
+    Route::get('/meus-treinamentos', [MeuTreinamentoController::class, 'index']);
+    Route::get('/meus-treinamentos/{treinamentoId}', [MeuTreinamentoController::class, 'show'])->whereNumber('treinamentoId');
+    Route::post('/meus-treinamentos/{treinamentoId}/iniciar', [MeuTreinamentoController::class, 'iniciar'])->whereNumber('treinamentoId');
+    Route::post('/meus-treinamentos/{treinamentoId}/concluir', [MeuTreinamentoController::class, 'concluir'])->whereNumber('treinamentoId');
 
     Route::get('/treinamentos', [TreinamentoController::class, 'index']);
     Route::get('/treinamentos/{id}', [TreinamentoController::class, 'show']);
