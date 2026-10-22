@@ -69,6 +69,11 @@ class Treinamento extends Model
         );
     }
 
+    public function grupos(): BelongsToMany
+    {
+        return $this->belongsToMany(Grupo::class, 'treinamento_grupos', 'treinamento_id', 'grupo_id');
+    }
+
     public function cas(): BelongsToMany
     {
         return $this->belongsToMany(

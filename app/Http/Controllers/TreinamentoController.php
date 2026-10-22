@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreUpdateTreinamentoRequest;
 use App\Http\Resources\TreinamentoResource;
+use App\Models\Grupo;
 use App\Models\Pessoa;
 use App\Models\Treinamento;
 use Illuminate\Http\JsonResponse;
@@ -21,7 +22,7 @@ class TreinamentoController extends Controller
 
         $treinamentos = Treinamento::where('id_empresa', $pessoa->empresa_id_stw)
             ->when(! $pessoa->is_admin, fn ($query) => $query->where('ativo', true))
-            ->with('prerequisitos')
+            ->with(['prerequisitos', 'grupos'])
             ->orderBy('titulo')
             ->get();
 
@@ -30,7 +31,7 @@ class TreinamentoController extends Controller
 
     public function show(Request $request, int $id): TreinamentoResource
     {
-        return new TreinamentoResource($this->find($request, $id)->load('prerequisitos'));
+        return new TreinamentoResource($this->find($request, $id)->load(['prerequisitos', 'grupos']));
     }
 
     public function store(StoreUpdateTreinamentoRequest $request): JsonResponse
@@ -38,10 +39,13 @@ class TreinamentoController extends Controller
         $pessoa = $this->pessoa($request);
 
         $dados = $request->validated();
+        $grupoIds = $dados['grupo_ids'] ?? [];
 
-        DB::transaction(function () use ($dados, $pessoa) {
+        $this->exigirGruposDaEmpresa($grupoIds, $pessoa, 'grupo_ids');
+
+        DB::transaction(function () use ($dados, $pessoa, $grupoIds) {
             $treinamento = Treinamento::create([
-                ...Arr::except($dados, ['prerequisito_id']),
+                ...Arr::except($dados, ['prerequisito_id', 'grupo_ids']),
                 'id_empresa' => $pessoa->empresa_id_stw,
                 'criado_por_pessoa_id_stw' => $pessoa->pessoa_id_stw,
             ]);
@@ -49,6 +53,8 @@ class TreinamentoController extends Controller
             if (! empty($dados['prerequisito_id'])) {
                 $this->definirPrerequisito($treinamento, $dados['prerequisito_id'], $pessoa);
             }
+
+            $treinamento->grupos()->attach($grupoIds);
         });
 
         return response()->json(['message' => 'Treinamento cadastrado com sucesso.'], 201);
@@ -74,11 +80,29 @@ class TreinamentoController extends Controller
             $this->impedirSeForPrerequisitoAtivo($treinamento);
         }
 
-        DB::transaction(function () use ($treinamento, $dados, $pessoa, $alteraAtivo) {
-            $treinamento->update(Arr::except($dados, ['prerequisito_id']));
+        $adicionados = $dados['grupos_adicionados'] ?? [];
+        $removidos = $dados['grupos_removidos'] ?? [];
+
+        if (array_intersect($adicionados, $removidos)) {
+            throw ValidationException::withMessages([
+                'grupos_removidos' => 'Um grupo não pode ser adicionado e removido ao mesmo tempo.',
+            ]);
+        }
+
+        $this->exigirGruposDaEmpresa($adicionados, $pessoa, 'grupos_adicionados');
+
+        DB::transaction(function () use ($treinamento, $dados, $pessoa, $alteraAtivo, $adicionados, $removidos) {
+            $treinamento->update(Arr::except($dados, ['prerequisito_id', 'grupos_adicionados', 'grupos_removidos']));
 
             if (array_key_exists('prerequisito_id', $dados)) {
                 $this->definirPrerequisito($treinamento, $dados['prerequisito_id'], $pessoa);
+            }
+
+            // Marcar um grupo cria o vínculo (sem duplicar); desmarcar remove só o vínculo deste treinamento.
+            $treinamento->grupos()->syncWithoutDetaching($adicionados);
+
+            if ($removidos) {
+                $treinamento->grupos()->detach($removidos);
             }
 
             // Reativar só vale se o pré-requisito (já com o vínculo atualizado) estiver ativo.
@@ -106,6 +130,21 @@ class TreinamentoController extends Controller
         if ($tipo === 'online' && blank($video)) {
             throw ValidationException::withMessages([
                 'video_url_youtube' => 'Informe o link do vídeo no YouTube.',
+            ]);
+        }
+    }
+
+    private function exigirGruposDaEmpresa(array $grupoIds, Pessoa $pessoa, string $campo): void
+    {
+        if (! $grupoIds) {
+            return;
+        }
+
+        $encontrados = Grupo::where('id_empresa', $pessoa->empresa_id_stw)->whereIn('id', $grupoIds)->count();
+
+        if ($encontrados !== count($grupoIds)) {
+            throw ValidationException::withMessages([
+                $campo => 'Selecione grupos da sua empresa.',
             ]);
         }
     }

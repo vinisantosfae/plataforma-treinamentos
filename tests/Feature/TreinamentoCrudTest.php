@@ -264,6 +264,71 @@ class TreinamentoCrudTest extends TestCase
             ->assertJsonCount(0, 'data.1.prerequisitos');
     }
 
+    public function test_admin_cria_treinamento_com_grupos(): void
+    {
+        $grupos = [$this->grupo(1001, 'Operação'), $this->grupo(1001, 'Manutenção')];
+
+        $this->as(2001)->postJson('/api/treinamentos', [...$this->payload, 'grupo_ids' => $grupos])->assertCreated();
+
+        $treinamento = Treinamento::firstWhere('titulo', 'Uso correto de EPIs');
+        $this->assertEqualsCanonicalizing($grupos, $treinamento->grupos()->pluck('grupos.id')->all());
+    }
+
+    public function test_grupo_precisa_ser_da_mesma_empresa(): void
+    {
+        $outraEmpresa = $this->grupo(1002, 'Beta');
+        $treinamento = $this->treinamento(1001, 2001, 'Ativo');
+
+        $this->as(2001)->postJson('/api/treinamentos', [...$this->payload, 'grupo_ids' => [$outraEmpresa]])
+            ->assertUnprocessable()->assertJsonValidationErrors('grupo_ids');
+        $this->as(2001)->patchJson("/api/treinamentos/{$treinamento->id}", ['grupos_adicionados' => [$outraEmpresa]])
+            ->assertUnprocessable()->assertJsonValidationErrors('grupos_adicionados');
+        $this->assertDatabaseCount('treinamento_grupos', 0);
+    }
+
+    public function test_admin_adiciona_e_remove_grupos_por_patch(): void
+    {
+        $operacao = $this->grupo(1001, 'Operação');
+        $manutencao = $this->grupo(1001, 'Manutenção');
+        $treinamento = $this->treinamento(1001, 2001, 'Ativo');
+        $treinamento->grupos()->attach($operacao);
+
+        $this->as(2001)->patchJson("/api/treinamentos/{$treinamento->id}", [
+            'grupos_adicionados' => [$manutencao],
+            'grupos_removidos' => [$operacao],
+        ])->assertOk();
+
+        $this->assertSame([$manutencao], $treinamento->grupos()->pluck('grupos.id')->all());
+    }
+
+    public function test_nao_adiciona_e_remove_o_mesmo_grupo(): void
+    {
+        $grupo = $this->grupo(1001, 'Operação');
+        $treinamento = $this->treinamento(1001, 2001, 'Ativo');
+
+        $this->as(2001)->patchJson("/api/treinamentos/{$treinamento->id}", [
+            'grupos_adicionados' => [$grupo],
+            'grupos_removidos' => [$grupo],
+        ])->assertUnprocessable()->assertJsonValidationErrors('grupos_removidos');
+    }
+
+    public function test_patch_sem_grupos_mantem_os_vinculos(): void
+    {
+        $grupo = $this->grupo(1001, 'Operação');
+        $treinamento = $this->treinamento(1001, 2001, 'Ativo');
+        $treinamento->grupos()->attach($grupo);
+
+        $this->as(2001)->patchJson("/api/treinamentos/{$treinamento->id}", ['titulo' => 'Novo'])->assertOk();
+
+        $this->as(2001)->getJson("/api/treinamentos/{$treinamento->id}")->assertOk()
+            ->assertJsonPath('data.grupos.0.id', $grupo);
+    }
+
+    private function grupo(int $empresa, string $nome): int
+    {
+        return DB::table('grupos')->insertGetId(['nome' => $nome, 'id_empresa' => $empresa]);
+    }
+
     private function as(int $pessoaIdStw): self
     {
         $token = User::factory()->create()->createToken('test');
