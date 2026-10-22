@@ -31,6 +31,14 @@ class AuthController extends Controller
         abort_unless($pessoa && $pessoa->cpf === $mockUser['cpf'] && $pessoa->is_admin === $mockUser['isAdmin'], 422, 'Usuário mock não está sincronizado.');
         abort_if($data['perfil'] === 'administrador' && ! $pessoa->is_admin, 403, 'Este CPF não possui acesso de administrador.');
 
+        // O STW devolve os contatos no login; guardamos para os alertas de vencimento.
+        $pessoa->update([
+            'email' => $mockUser['email'] ?? null,
+            'supervisor_nome' => $mockUser['supervisor']['nome'] ?? null,
+            'supervisor_email' => $mockUser['supervisor']['email'] ?? null,
+            'sincronizado_em' => now(),
+        ]);
+
         $user = User::firstOrCreate(
             ['email' => 'mock.'.$cpf.'@plataforma.test'],
             ['name' => $pessoa->nome, 'password' => Str::random(40)]
@@ -66,7 +74,12 @@ class AuthController extends Controller
             'pessoaIdStw' => $pessoa->pessoa_id_stw,
             'nome' => $pessoa->nome,
             'cpf' => $pessoa->cpf,
+            'email' => $pessoa->email,
             'isAdmin' => $pessoa->is_admin,
+            'supervisor' => $pessoa->supervisor_email === null ? null : [
+                'nome' => $pessoa->supervisor_nome,
+                'email' => $pessoa->supervisor_email,
+            ],
             'empresa' => [
                 'idStw' => $pessoa->empresa->id_stw,
                 'razaoSocial' => $pessoa->empresa->razao_social,

@@ -18,8 +18,8 @@ Authorization: Bearer <token>
 
 | CPF | Nome | Empresa | Administrador |
 |---|---|---|---|
-| 111.111.111-11 | Ana Souza | ACME (1001) | sim |
-| 222.222.222-22 | Bruno Lima | ACME (1001) | não |
+| 111.111.111-11 | Ana Souza | STW (1001) | sim |
+| 222.222.222-22 | João Pedro | STW (1001) | não |
 | 333.333.333-33 | Carla Oliveira | Beta (1002) | sim |
 
 ### Escopo por empresa e perfis
@@ -77,11 +77,15 @@ Resposta `200`:
     "pessoaIdStw": 2001,
     "nome": "Ana Souza",
     "cpf": "111.111.111-11",
+    "email": "ana.souza@acme.test",
     "isAdmin": true,
-    "empresa": { "idStw": 1001, "razaoSocial": "ACME Equipamentos de Segurança Ltda." }
+    "supervisor": null,
+    "empresa": { "idStw": 1001, "razaoSocial": "STW" }
   }
 }
 ```
+
+`supervisor` é `{ "nome", "email" }` do administrador responsável pelo colaborador, ou `null`. O login grava `email` e `supervisor` na pessoa para os alertas de vencimento.
 
 CPF ou senha inválidos respondem `422` com `CPF ou senha inválidos.`
 
@@ -95,12 +99,12 @@ Resposta `204` sem corpo. O token deixa de valer.
 
 ### GET `/dashboard/colaborador`
 
-Resposta `200` (exemplo do Bruno Lima, com o seed de demonstração):
+Resposta `200` (exemplo do João Pedro, com o seed de demonstração):
 
 ```json
 {
-  "identity": { "pessoaIdStw": 2002, "nome": "Bruno Lima", "cpf": "222.222.222-22", "isAdmin": false,
-                "empresa": { "idStw": 1001, "razaoSocial": "ACME Equipamentos de Segurança Ltda." } },
+  "identity": { "pessoaIdStw": 2002, "nome": "João Pedro", "cpf": "222.222.222-22", "isAdmin": false,
+                "empresa": { "idStw": 1001, "razaoSocial": "STW" } },
   "summary": { "aFazer": 0, "emAndamento": 1, "concluidos": 0, "atrasados": 0 },
   "percentualConcluido": 0,
   "attention": [
@@ -292,6 +296,19 @@ Grava `status = concluido`, `termos_aceitos`, `termos_aceitos_em` e `data_conclu
 | Já concluído | `200` **sem alterar** a data original (rever o vídeo não refaz a conclusão) |
 
 > O servidor **não sabe** se o vídeo foi realmente assistido: essa verificação (fim do vídeo) é feita só pelo front. O servidor exige apenas o aceite dos termos.
+
+## Alertas de vencimento (e-mail)
+
+O comando `php artisan treinamentos:alertar-vencimento` roda todo dia às `ALERTAS_HORARIO` (padrão `08:00`, fuso `America/Sao_Paulo`). Em produção, o cron do servidor precisa chamar o agendador do Laravel a cada minuto:
+
+```
+* * * * * cd /caminho/do/projeto && php artisan schedule:run >> /dev/null 2>&1
+```
+
+- **Colaborador:** um e-mail por atribuição não concluída de treinamento ativo cujo `data_limite` vence entre hoje e daqui a `ALERTAS_DIAS_ANTECEDENCIA` dias (padrão `3`). Como roda todo dia, o colaborador recebe o aviso com 3, 2, 1 e 0 dias restantes.
+- **Supervisor:** um relatório por e-mail de supervisor, com colaborador, treinamento, prazo, dias restantes e status. Desligue com `ALERTAS_NOTIFICAR_SUPERVISOR=false`.
+- Só recebe quem tem `email` / `supervisor.email` gravado, ou seja, quem já fez login ao menos uma vez (ou veio do seed).
+- Teste manual: `php artisan treinamentos:alertar-vencimento --dias=60` com `MAIL_MAILER=log` grava os e-mails em `storage/logs`.
 
 ## Exemplo rápido com curl
 
