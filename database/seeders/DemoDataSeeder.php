@@ -7,6 +7,7 @@ use App\Models\AtribuicaoTreinamentoCa;
 use App\Models\CaStw;
 use App\Models\CaTreinamento;
 use App\Models\EmpresaStw;
+use App\Models\Grupo;
 use App\Models\PresencaTreinamento;
 use App\Models\Treinamento;
 use App\Models\TreinamentoEncontro;
@@ -151,6 +152,27 @@ class DemoDataSeeder extends Seeder
             'treinamento_id' => $produtosQuimicos->id,
             'prerequisito_treinamento_id' => $integracao->id,
         ]);
+
+        // Grupos de exemplo: doze para cada empresa, para testar a seleção com uma lista longa.
+        $nomesPorEmpresa = [
+            $empresaAcme->id_stw => [
+                'Produção', 'Manutenção', 'Logística', 'Almoxarifado', 'Qualidade', 'Segurança do Trabalho',
+                'Expedição', 'Compras', 'Administrativo', 'Recursos Humanos', 'Manutenção Elétrica', 'Laboratório',
+            ],
+            $empresaBeta->id_stw => [
+                'Obras', 'Segurança do Trabalho', 'Administrativo', 'Engenharia', 'Planejamento', 'Suprimentos',
+                'Topografia', 'Montagem', 'Soldagem', 'Elétrica', 'Frota', 'Almoxarifado',
+            ],
+        ];
+        $grupoId = 7001;
+        foreach ($nomesPorEmpresa as $idEmpresa => $nomes) {
+            foreach ($nomes as $nome) {
+                $this->saveWithId(new Grupo(), $grupoId++, ['nome' => $nome, 'id_empresa' => $idEmpresa]);
+            }
+        }
+
+        // A Integração de Segurança já nasce vinculada ao grupo Produção, para ver o vínculo marcado ao editar.
+        DB::table('treinamento_grupos')->updateOrInsert(['treinamento_id' => $integracao->id, 'grupo_id' => 7001]);
 
         $encontroEpi = $this->saveWithId(new TreinamentoEncontro(), 5001, [
             'treinamento_id' => $epi->id,

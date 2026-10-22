@@ -48,6 +48,7 @@ Com `APP_DEBUG=true` o Laravel acrescenta `exception`, `file` e `trace` ao erro.
 | POST | `/logout` | logado | Revoga o token atual |
 | GET | `/dashboard/colaborador` | logado | Indicadores do colaborador |
 | GET | `/dashboard/admin` | admin | Indicadores da empresa |
+| GET | `/grupos` | logado | Grupos da empresa de quem está logado |
 | GET | `/meus-treinamentos` | logado | Treinamentos do colaborador logado, com prazo, status e bloqueio |
 | GET | `/meus-treinamentos/{id}` | logado | Detalhe de um dos meus treinamentos (inclui o link do vídeo) |
 | POST | `/meus-treinamentos/{id}/iniciar` | logado | Marca o treinamento como "em andamento" |
@@ -174,6 +175,9 @@ Nas rotas `GET /treinamentos` e `GET /treinamentos/{id}` o campo `prerequisitos`
 | `duracao_video_segundos` | opcional; inteiro maior ou igual a 0 |
 | `ativo` | opcional; booleano |
 | `prerequisito_id` | opcional; id de outro treinamento, ou `null` para remover |
+| `grupo_ids` | **só no POST**; opcional; lista de ids de grupos da sua empresa a vincular (zero, um ou vários) |
+| `grupos_adicionados` | **só no PATCH**; opcional; ids de grupos a vincular (quem já está vinculado não duplica) |
+| `grupos_removidos` | **só no PATCH**; opcional; ids de grupos cujo vínculo com este treinamento será removido. Um mesmo grupo não pode estar nas duas listas |
 
 No **PATCH** nenhum campo é obrigatório: só o que for enviado é alterado. A empresa e o criador são definidos pelo servidor a partir do token e **não podem** ser informados no corpo.
 
@@ -204,6 +208,20 @@ Resposta `200`: `{ "message": "Treinamento atualizado com sucesso." }`. Enviar `
 Não apaga o registro: marca `ativo = false`. Resposta `200`: `{ "message": "Treinamento inativado com sucesso." }`.
 
 Se o treinamento for pré-requisito de outro treinamento **ativo**, responde `422` com `Este treinamento é pré-requisito de outro treinamento ativo.`
+
+### Grupos
+
+Um treinamento pode estar em **zero, um ou vários** grupos (opcional). Os grupos atuais vêm em `grupos` no `GET /treinamentos` e no detalhe. Grupo de outra empresa responde `422` (`Selecione grupos da sua empresa.`). Remover um grupo apaga só o **vínculo** com o treinamento, nunca o grupo nem o treinamento. Omitir os campos de grupo no PATCH mantém os vínculos como estão.
+
+#### GET `/grupos`
+
+Qualquer usuário logado. Devolve os grupos da **empresa do token** (nenhum filtro é enviado pelo cliente), em ordem alfabética:
+
+```json
+{ "data": [ { "id": 7001, "nome": "Produção", "idEmpresa": 1001 } ] }
+```
+
+> **Ainda não existe:** restringir cada pessoa aos grupos a que está vinculada. Hoje todos veem todos os grupos da própria empresa.
 
 ### Ativar e inativar
 
